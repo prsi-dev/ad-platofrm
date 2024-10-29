@@ -3,6 +3,6 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "include": ["src"],
+  "include": ["src", "turbo/generators/config.ts"],
   "exclude": ["node_modules", "dist"]
 }

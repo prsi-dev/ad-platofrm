@@ -1,0 +1,138 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex", "fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  password      String
+  name          String
+  profileImage  String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  advertisement Advertisement[]
+  items         Item[]
+  message       Message[]
+  requests      Request[]
+  chats         Chat[]          @relation("ChatToUser")
+}
+
+model Location {
+  id            Int             @id @default(autoincrement())
+  street        String
+  postalCode    String
+  city          String
+  latitude      Float
+  longitude     Float
+  advertisement Advertisement[]
+  item          Item[]
+}
+
+model Item {
+  id            Int             @id @default(autoincrement())
+  title         String
+  description   String
+  price         Float
+  images        String[]
+  locationId    Int?
+  status        ItemStatus      @default(AVAILABLE)
+  adDuration    AdDuration      @default(DAYS)
+  ownerId       Int
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  size          ItemSize        @default(MEDIUM)
+  chat          Chat[]
+  location      Location?       @relation(fields: [locationId], references: [id])
+  owner         User            @relation(fields: [ownerId], references: [id])
+  requests      Request[]
+  advertisement Advertisement[] @relation("AdvertisementToItem")
+}
+
+model Advertisement {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
+  images      String[]
+  locationId  Int?
+  status      ItemStatus @default(AVAILABLE)
+  adDuration  AdDuration @default(DAYS)
+  ownerId     Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  location    Location?  @relation(fields: [locationId], references: [id])
+  owner       User       @relation(fields: [ownerId], references: [id])
+  chat        Chat[]
+  requests    Request[]
+  items       Item[]     @relation("AdvertisementToItem")
+}
+
+model Chat {
+  id              Int            @id @default(autoincrement())
+  itemId          Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  advertisementId Int?
+  advertisement   Advertisement? @relation(fields: [advertisementId], references: [id])
+  item            Item           @relation(fields: [itemId], references: [id])
+  messages        Message[]
+  participants    User[]         @relation("ChatToUser")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  senderId  Int
+  chatId    Int
+  createdAt DateTime @default(now())
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
+}
+
+model Request {
+  id              Int            @id @default(autoincrement())
+  amount          Float
+  message         String?
+  itemId          Int
+  requesterId     Int
+  status          RequestStatus  @default(PENDING)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  advertisementId Int?
+  advertisement   Advertisement? @relation(fields: [advertisementId], references: [id])
+  item            Item           @relation(fields: [itemId], references: [id])
+  requester       User           @relation(fields: [requesterId], references: [id])
+}
+
+enum AdDuration {
+  DAYS
+  WEEKS
+  MONTHS
+  ALL_TIME
+}
+
+enum ItemStatus {
+  AVAILABLE
+  IN_NEGOTIATION
+  ASSIGNED
+  SOLD
+}
+
+enum ItemSize {
+  SMALL
+  MEDIUM
+  LARGE
+  XL
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
